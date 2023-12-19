@@ -1,0 +1,37 @@
+version: '3.4'
+
+services:
+  timeseriespoc:
+    image: ${DOCKER_REGISTRY-}timeseriespoc
+    build:
+      context: .
+      dockerfile: TimeSeriesPoc/Dockerfile
+    depends_on:
+       - database
+  database:
+    image: "timescale/timescaledb-ha:pg14-latest"
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=admin 
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=time-series
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - ./Eaton-Root-CA-2.pem:/etc/ssl/certs/Eaton-Root-CA-2.pem
+    environment:
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_NAME=Main Org.
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    ports:
+      - "3000:3000"
+
+volumes:
+  grafana_data: {}
